@@ -55,7 +55,8 @@ func huificate(listener net.Listener) error {
 		if len(lineParts) != 2 {
 			return errors.New("400")
 		}
-		headers[strings.TrimSpace(lineParts[0])] = lineParts[1]
+		headerName := strings.ToLower(strings.TrimSpace(lineParts[0]))
+		headers[headerName] = strings.TrimSpace(lineParts[1])
 	}
 
 	response := "HTTP/1.0 200 ok\r\n"
@@ -63,16 +64,29 @@ func huificate(listener net.Listener) error {
 	response += "<pre>"
 	response += "\n\nPART 1:\n\n" + requestParts[0]
 	response += "\n\nPART 2:\n\n" + requestParts[1]
-	response += "\n\n</pre>\n"
-//	response += "hello\n" + headers[1]
-//	response += "\n\n mello" + met[0]
+	response += "</pre>"
+
 	if method[0] == "GET" {
-		response += "This request method is: " + method[0] + ", it has no body\n"
-	}
-	if method[0] == "POST" {
+		response += "This request method is: " + method[0] + ", it has no body\r\n\r\n"
+	} else if method[0] == "POST" {
 		response += "This request method is: " + method[0] + ", it has body\n"
+		contentType := headers["content-type"]
+		if strings.Contains(contentType, "application/x-www-form-urlencoded") {
+			response += "This request's body is urlencoded\n"
+		} else if strings.Contains(contentType, "application/json") {
+			response += "This request's body type is json\n"
+		} else if strings.Contains(contentType, "multipart/form-data") {
+			response += "This request's body type is multipart\n"
+		}
+
+		//func Contains(s, substr string) bool
 	}
-	response += "\n\nPARSED HEADERS:\n\n" + fmt.Sprintf("%+v", headers)
+
+	if method[0] == "GET" {
+		response += "\r\nPARSED HEADERS:\n\n" + fmt.Sprintf("%+v", headers)
+	} else if method[0] == "POST" {
+		response += "\r\nPARSED HEADERS:\n\n" + fmt.Sprintf("%+v", headers)
+	}
 
 	conn.Write([]byte(response))
 
@@ -80,4 +94,5 @@ func huificate(listener net.Listener) error {
 
 	return nil
 }
+
 
