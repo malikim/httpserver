@@ -8,7 +8,6 @@ import (
 	"strings"
 )
 
-
 func main() {
 	l, err := net.Listen("tcp", ":8080")
 	if err != nil {
@@ -17,7 +16,7 @@ func main() {
 	}
 
 	for true {
-		err = huificate(l)
+		err = handler(l)
 		if err != nil {
 			fmt.Println(err)
 			break
@@ -27,7 +26,7 @@ func main() {
 	fmt.Println("end")
 }
 
-func huificate(listener net.Listener) error {
+func handler(listener net.Listener) error {
 	conn, err := listener.Accept()
 	if err != nil {
 		return err
@@ -40,7 +39,7 @@ func huificate(listener net.Listener) error {
 	}
 
 	request := string(buff[:length])
-//	func SplitN(s, sep string, n int) []string
+
 	requestParts := strings.SplitN(request, "\r\n\r\n", 2)
 
 	if len(requestParts) != 2 {
@@ -48,15 +47,9 @@ func huificate(listener net.Listener) error {
 	}
 	headerLines := strings.Split(requestParts[0], "\r\n")
 	method := strings.Split(headerLines[0], " ")
-
-	headers := make(map[string]string)
-	for _, line := range headerLines[1:] {
-		lineParts := strings.SplitN(line, ":", 2)
-		if len(lineParts) != 2 {
-			return errors.New("400")
-		}
-		headerName := strings.ToLower(strings.TrimSpace(lineParts[0]))
-		headers[headerName] = strings.TrimSpace(lineParts[1])
+	headers, err := parseHeaders(headerLines[1:])
+	if err != nil {
+		return err
 	}
 
 	response := "HTTP/1.0 200 ok\r\n"
@@ -78,9 +71,8 @@ func huificate(listener net.Listener) error {
 		} else if strings.Contains(contentType, "multipart/form-data") {
 			response += "This request's body type is multipart\n"
 		}
-
-		//func Contains(s, substr string) bool
 	}
+
 
 	if method[0] == "GET" {
 		response += "\r\nPARSED HEADERS:\n\n" + fmt.Sprintf("%+v", headers)
@@ -95,4 +87,15 @@ func huificate(listener net.Listener) error {
 	return nil
 }
 
-
+func parseHeaders(lines []string) (map[string]string, error) {
+	headers := make(map[string]string)
+	for _, line := range lines {
+		lineParts := strings.SplitN(line, ":", 2)
+		if len(lineParts) != 2 {
+			return nil, errors.New("400")
+		}
+		headerName := strings.ToLower(strings.TrimSpace(lineParts[0]))
+		headers[headerName] = strings.TrimSpace(lineParts[1])
+	}
+	return headers, nil
+}
