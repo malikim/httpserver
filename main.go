@@ -6,6 +6,7 @@ import (
 	"os"
 	"errors"
 	"strings"
+	"net/url"
 )
 
 func main() {
@@ -52,6 +53,9 @@ func handler(listener net.Listener) error {
 		return err
 	}
 
+
+	urlParse(method[1])
+
 	response := "HTTP/1.0 200 ok\r\n"
 	response += "Content-type: text/html\r\n\r\n"
 	response += "<pre>"
@@ -66,6 +70,7 @@ func handler(listener net.Listener) error {
 		contentType := headers["content-type"]
 		if strings.Contains(contentType, "application/x-www-form-urlencoded") {
 			response += "This request's body is urlencoded\n"
+
 		} else if strings.Contains(contentType, "application/json") {
 			response += "This request's body type is json\n"
 		} else if strings.Contains(contentType, "multipart/form-data") {
@@ -98,4 +103,24 @@ func parseHeaders(lines []string) (map[string]string, error) {
 		headers[headerName] = strings.TrimSpace(lineParts[1])
 	}
 	return headers, nil
+
+
+}
+
+func urlParse(urlStr string) (*url.URL, error) {
+	// вкурить и сделать без функции
+	u, err := url.Parse(urlStr)
+	if err == nil {
+		fmt.Println(u.Path)
+		fmt.Println(u.RawPath)
+		fmt.Println(u.String())
+	}
+	return u, err
+	
+	
+}
+//func Marshal(v interface{}) ([]byte, error)
+//requestParts[1]
+func jsonParse(jsonStr string) () {
+	
 }
