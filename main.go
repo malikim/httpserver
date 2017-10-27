@@ -7,6 +7,7 @@ import (
 	"errors"
 	"strings"
 	"net/url"
+	"encoding/json"
 )
 
 func main() {
@@ -73,6 +74,12 @@ func handler(listener net.Listener) error {
 
 		} else if strings.Contains(contentType, "application/json") {
 			response += "This request's body type is json\n"
+			lapk, err := jsonParse(requestParts[1])
+			if err != nil {
+				return err
+			}
+			fmt.Println(lapk)
+
 		} else if strings.Contains(contentType, "multipart/form-data") {
 			response += "This request's body type is multipart\n"
 		}
@@ -116,11 +123,14 @@ func urlParse(urlStr string) (*url.URL, error) {
 		fmt.Println(u.String())
 	}
 	return u, err
-	
-	
+
+
 }
 //func Marshal(v interface{}) ([]byte, error)
 //requestParts[1]
-func jsonParse(jsonStr string) () {
-	
+func jsonParse(jsonStr string) (map[string]string, error) {
+	//	var dat map[string]interface{}
+	var data map[string]string
+	err := json.Unmarshal([]byte(jsonStr), &data)
+	return data, err
 }
