@@ -64,6 +64,8 @@ func handler(listener net.Listener) error {
 	response += "\n\nPART 2:\n\n" + requestParts[1]
 	response += "</pre>"
 
+
+	var lapk map[string]string
 	if method[0] == "GET" {
 		response += "This request method is: " + method[0] + ", it has no body\r\n\r\n"
 	} else if method[0] == "POST" {
@@ -71,17 +73,26 @@ func handler(listener net.Listener) error {
 		contentType := headers["content-type"]
 		if strings.Contains(contentType, "application/x-www-form-urlencoded") {
 			response += "This request's body is urlencoded\n"
-
+			lapk, err = formUrlParse(requestParts[1])
+			response += fmt.Sprintf("Your urlencoded kirillic name is: %s %s \n", lapk["Ivan"], lapk["Ivanov"])
 		} else if strings.Contains(contentType, "application/json") {
 			response += "This request's body type is json\n"
-			lapk, err := jsonParse(requestParts[1])
+			lapk, err = jsonParse(requestParts[1])
+			response += fmt.Sprintf("Your name is: %s %s \n", lapk["firstName"], lapk["lastName"])
+			firstName := lapk["firstName"]
+				if strings.Contains(firstName, "firstName") {
+					response += "Your first name is: " + lapk["firstName"]
+				}
 			if err != nil {
 				return err
 			}
-			fmt.Println(lapk)
+			response += "Parsed json body:\n\n" + fmt.Sprintf("%+v", lapk)
+
 
 		} else if strings.Contains(contentType, "multipart/form-data") {
 			response += "This request's body type is multipart\n"
+			lapk, err = multipartParse(requestParts[1])
+			response += fmt.Sprintf("Your multipart name is: %s %s \n", lapk["Ivan"], lapk["Ivanov"])
 		}
 	}
 
@@ -114,6 +125,20 @@ func parseHeaders(lines []string) (map[string]string, error) {
 
 }
 
+func formUrlParse(urlStr []string) (map[string]string, error) {
+	data := strings.Split(urlStr[0], "&")
+	dataResult := make(map[string]string)
+	for _, str := range data {
+		strParts := strings.Split(str, "=")
+
+		if len(strParts) != 2 {
+			return nil, errors.New("400")
+		}
+		dataResult[strParts[0]] = strParts[1]
+	}
+
+	return dataResult, nil
+}
 func urlParse(urlStr string) (*url.URL, error) {
 	// вкурить и сделать без функции
 	u, err := url.Parse(urlStr)
@@ -126,6 +151,7 @@ func urlParse(urlStr string) (*url.URL, error) {
 
 
 }
+
 //func Marshal(v interface{}) ([]byte, error)
 //requestParts[1]
 func jsonParse(jsonStr string) (map[string]string, error) {
@@ -134,3 +160,35 @@ func jsonParse(jsonStr string) (map[string]string, error) {
 	err := json.Unmarshal([]byte(jsonStr), &data)
 	return data, err
 }
+
+func multipartParse(mulripartStr string) (map[string]string, error) {
+	var data map[string]string
+	err :=
+	return data, err
+}
+//lapk
+/*
+func jsonResponse (value map[string]string) ([]byte, error) {
+	if strings.Contains(value, "firstName") {
+		response +=
+	}
+	return a, b
+}
+
+
+
+
+if strings.Contains(contentType, "application/json") {
+			response += "This request's body type is json\n"
+			lapk, err = jsonParse(requestParts[1])
+			if err != nil {
+				return err
+for _, line := range lines {
+		lineParts := strings.SplitN(line, ":", 2)
+		if len(lineParts) != 2 {
+			return nil, errors.New("400")
+		}
+		headerName := strings.ToLower(strings.TrimSpace(lineParts[0]))
+		headers[headerName] = strings.TrimSpace(lineParts[1])
+	}
+ */
