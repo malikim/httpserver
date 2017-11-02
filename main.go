@@ -27,14 +27,18 @@ func main() {
 
 	fmt.Println("end")
 }
-
+type jsonchek struct {
+	str string
+	lit bool
+	num int
+}
 func handler(listener net.Listener) error {
 	conn, err := listener.Accept()
 	if err != nil {
 		return err
 	}
 
-	buff := make([]byte, 1024)
+	buff := make([]byte, 10000024)
 	length, err := conn.Read(buff)
 	if err != nil {
 		return err
@@ -62,7 +66,7 @@ func handler(listener net.Listener) error {
 	response += "<pre>"
 	response += "\n\nPART 1:\n\n" + requestParts[0]
 	response += "\n\nPART 2:\n\n" + requestParts[1]
-	response += "</pre>"
+	response += "</pre>\n\n"
 
 
 	var lapk map[string]string
@@ -70,8 +74,9 @@ func handler(listener net.Listener) error {
 		response += "This request method is: " + method[0] + ", it has no body\r\n\r\n"
 	} else if method[0] == "POST" {
 		response += "This request method is: " + method[0] + ", it has body\n"
+		fmt.Println("POST!")
 		contentType := headers["content-type"]
-		if strings.Contains(contentType, "application/x-www-form-urlencoded") {
+		if strings.Contains(contentType, "x-www-form-urlencoded") {
 			response += "This request's body is urlencoded\n"
 			lapk, err = formUrlParse(requestParts[1])
 			response += fmt.Sprintf("Your urlencoded kirillic name is: %s %s \n", lapk["Ivan"], lapk["Ivanov"])
@@ -86,27 +91,34 @@ func handler(listener net.Listener) error {
 			if err != nil {
 				return err
 			}
-			response += "Parsed json body:\n\n" + fmt.Sprintf("%+v", lapk)
+			response += "\nParsed json body:\n\n" + fmt.Sprintf("%+v", lapk)
 
 
 		} else if strings.Contains(contentType, "multipart/form-data") {
+			fmt.Println("MULTIPART!")
 			response += "This request's body type is multipart\n"
-			lapk, err = multipartParse(requestParts[1])
-			response += fmt.Sprintf("Your multipart name is: %s %s \n", lapk["Ivan"], lapk["Ivanov"])
+			fmt.Println("MULTI!")
+			response += requestParts[1]
+			fmt.Println("314ZDETS!")
+			_, bound := multipartParse(contentType, requestParts[1])
+			response += "\nBoundary is:" + "[" + bound + "]"
+
+
+			//lapk, err = multipartParse(headers["content-type"], requestParts[1])
+			//response += fmt.Sprintf("Your multipart name is: %s %s \n", lapk["Ivan"], lapk["Ivanov"])
 		}
 	}
 
 
-	if method[0] == "GET" {
-		response += "\r\nPARSED HEADERS:\n\n" + fmt.Sprintf("%+v", headers)
-	} else if method[0] == "POST" {
-		response += "\r\nPARSED HEADERS:\n\n" + fmt.Sprintf("%+v", headers)
-	}
+	response += "\n\nPARSED HEADERS:\n\n" + fmt.Sprintf("%+v", headers)
 
+
+	fmt.Println("WRITE RESPONSE")
+	fmt.Println(response)
 	conn.Write([]byte(response))
-
+	fmt.Println("WRITE dfhgdfgdONSE")
 	conn.Close()
-
+	fmt.Println("WRITE SSSSSSSSSSSSSPONSE")
 	return nil
 }
 
@@ -115,24 +127,43 @@ func parseHeaders(lines []string) (map[string]string, error) {
 	for _, line := range lines {
 		lineParts := strings.SplitN(line, ":", 2)
 		if len(lineParts) != 2 {
-			return nil, errors.New("400")
+			return nil, errors.New("401")
 		}
 		headerName := strings.ToLower(strings.TrimSpace(lineParts[0]))
 		headers[headerName] = strings.TrimSpace(lineParts[1])
 	}
 	return headers, nil
-
-
 }
 
-func formUrlParse(urlStr []string) (map[string]string, error) {
-	data := strings.Split(urlStr[0], "&")
+func multipartParse(contentType, multipartStr string) ([]string, string) {
+
+	var boundary string
+	//data := make(map[string]string)
+//multipart/form-data; boundary=Asrf456BGe4h
+	contentTypeParts := strings.Split(contentType, ";")
+
+//[multipart/form-data, boundary=Asrf456BGe4h]
+	contentTypePartsBoundary := strings.Split(contentTypeParts[1], "=")
+	boundary = strings.TrimSpace(contentTypePartsBoundary[1])
+//"Asrf456BGe4h"
+	//if boundary != "" {
+	//	return nil
+	//}
+	datamata := strings.Split(multipartStr, boundary)
+
+
+	return datamata, boundary
+}
+
+
+func formUrlParse(urlStr string) (map[string]string, error) {
+	data := strings.Split(urlStr, "&")
 	dataResult := make(map[string]string)
 	for _, str := range data {
 		strParts := strings.Split(str, "=")
 
 		if len(strParts) != 2 {
-			return nil, errors.New("400")
+			return nil, errors.New("403")
 		}
 		dataResult[strParts[0]] = strParts[1]
 	}
@@ -159,36 +190,7 @@ func jsonParse(jsonStr string) (map[string]string, error) {
 	var data map[string]string
 	err := json.Unmarshal([]byte(jsonStr), &data)
 	return data, err
+	//{}
+	//[]
+	//literals
 }
-
-func multipartParse(mulripartStr string) (map[string]string, error) {
-	var data map[string]string
-	err :=
-	return data, err
-}
-//lapk
-/*
-func jsonResponse (value map[string]string) ([]byte, error) {
-	if strings.Contains(value, "firstName") {
-		response +=
-	}
-	return a, b
-}
-
-
-
-
-if strings.Contains(contentType, "application/json") {
-			response += "This request's body type is json\n"
-			lapk, err = jsonParse(requestParts[1])
-			if err != nil {
-				return err
-for _, line := range lines {
-		lineParts := strings.SplitN(line, ":", 2)
-		if len(lineParts) != 2 {
-			return nil, errors.New("400")
-		}
-		headerName := strings.ToLower(strings.TrimSpace(lineParts[0]))
-		headers[headerName] = strings.TrimSpace(lineParts[1])
-	}
- */
